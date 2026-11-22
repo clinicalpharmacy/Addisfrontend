@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
     FaUserInjured,
@@ -10,14 +10,25 @@ import {
     FaShieldAlt
 } from 'react-icons/fa';
 
-// Shared classes to prevent iOS/Safari tap-highlight flicker & shadow repaint.
-// - WebkitTapHighlightColor: transparent  -> kills the gray flash on tap
-// - transition-shadow (not transition)    -> only animate the shadow, not all props
-// - transform-gpu + backface-visibility   -> promotes card to its own GPU layer
-//                                            so Safari doesn't re-rasterize on tap
+/*
+ * iOS/Safari blink fixes applied here:
+ *  - No `hover:shadow-md` (removed; iOS fires a sticky :hover on tap that
+ *    repaints the card → looks like a blink). Static `shadow` only.
+ *  - No `transition` / `transition-shadow` on the card (Safari re-rasterizes
+ *    animated shadow layers on tap). Kept only on the inner arrow, which is
+ *    cheap and does not contain the card's box-shadow.
+ *  - `[-webkit-tap-highlight-color:transparent]` to kill the gray flash.
+ *  - `transform-gpu backface-hidden` to keep the card on its own layer.
+ *  - No `overflow-x-hidden` on the page container (known iOS repaint trigger).
+ *  - Welcome banner uses a solid color instead of a gradient so Safari
+ *    doesn't repaint the banner subtree during a tap.
+ */
 const cardBase =
-    'bg-white rounded-xl shadow p-4 transition-shadow duration-200 transform-gpu backface-hidden ' +
-    '[-webkit-tap-highlight-color:transparent] hover:shadow-md';
+    'block bg-white rounded-xl shadow p-4 transform-gpu backface-hidden ' +
+    '[-webkit-tap-highlight-color:transparent] ' +
+    'border-2 border-transparent';
+
+const cardBaseLink = `${cardBase} active:border-blue-100`;
 
 const Home = () => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -74,9 +85,9 @@ const Home = () => {
     };
 
     return (
-        <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
-            {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full mb-6">
+        <div className="page-container w-full max-w-full px-2 sm:px-4 md:px-6">
+            {/* Welcome Section — solid color (no gradient) to avoid iOS repaint */}
+            <div className="bg-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold">
@@ -107,7 +118,7 @@ const Home = () => {
             {/* Quick Access Grid - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 1. Medication Availability */}
-                <Link to="/medication-availability" className={cardBase}>
+                <Link to="/medication-availability" className={cardBaseLink}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
@@ -121,8 +132,8 @@ const Home = () => {
                     </div>
                 </Link>
 
-                {/* 2. Medication Information — the card that was blinking on Apple */}
-                <Link to="/knowledge/medications" className={cardBase}>
+                {/* 2. Medication Information — the card that was blinking */}
+                <Link to="/knowledge/medications" className={cardBaseLink}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
@@ -137,10 +148,7 @@ const Home = () => {
                 </Link>
 
                 {/* 3. Quick Check */}
-                <Link
-                    to="/quick-safety"
-                    className={`${cardBase} border-2 border-transparent hover:border-blue-100`}
-                >
+                <Link to="/quick-safety" className={cardBaseLink}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">Quick Check</h2>
@@ -163,10 +171,10 @@ const Home = () => {
                         to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
                         onClick={onClose}
                         className={({ isActive }) =>
-                            `${cardBase} border-2 ${
+                            `${cardBase} ${
                                 isActive && isSubscribed
                                     ? 'border-blue-500'
-                                    : 'border-transparent hover:border-blue-100'
+                                    : 'active:border-blue-100'
                             } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
                         }
                     >
@@ -186,7 +194,7 @@ const Home = () => {
 
                 {/* 5. Useful Links */}
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
-                    <Link to="/useful-links" className={cardBase}>
+                    <Link to="/useful-links" className={cardBaseLink}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
@@ -204,7 +212,7 @@ const Home = () => {
                 {/* 6. Home Remedies */}
                 <Link
                     to="/knowledge/remedies"
-                    className={`${cardBase} relative group cursor-pointer`}
+                    className={`${cardBaseLink} relative group cursor-pointer`}
                 >
                     {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                     <div className="flex items-center gap-3 mb-2">
@@ -214,7 +222,7 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end mt-2">
-                        <span className="text-green-600 text-sm flex items-center gap-1 font-medium group-hover:translate-x-1 transition-transform">
+                        <span className="text-green-600 text-sm flex items-center gap-1 font-medium group-active:translate-x-1 transition-transform">
                             {isAdmin ? "Browse" : "Coming Soon"} <FaArrowRight className="text-xs" />
                         </span>
                     </div>
@@ -225,7 +233,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* 7. Minor Illnesses */}
                 {showPharmacyTools && (
-                    <Link to="/knowledge/illnesses" className={cardBase}>
+                    <Link to="/knowledge/illnesses" className={cardBaseLink}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
@@ -244,7 +252,7 @@ const Home = () => {
                 {showPharmacyTools && (
                     <Link
                         to="/knowledge/compounding"
-                        className={`${cardBase} relative group cursor-pointer`}
+                        className={`${cardBaseLink} relative group cursor-pointer`}
                     >
                         {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                         <div className="flex items-center gap-3 mb-2 mt-1">
@@ -254,7 +262,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end mt-2">
-                            <span className="text-orange-600 text-sm flex items-center gap-1 font-medium group-hover:translate-x-1 transition-transform">
+                            <span className="text-orange-600 text-sm flex items-center gap-1 font-medium group-active:translate-x-1 transition-transform">
                                 {isAdmin ? "View" : "Coming Soon"} <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -263,7 +271,7 @@ const Home = () => {
 
                 {/* 9. Education */}
                 {showEducation && (
-                    <Link to="/knowledge/education" className={cardBase}>
+                    <Link to="/knowledge/education" className={cardBaseLink}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Education</h2>
