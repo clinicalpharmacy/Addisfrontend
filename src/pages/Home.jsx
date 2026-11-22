@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
     FaUserInjured,
@@ -10,35 +10,17 @@ import {
     FaShieldAlt
 } from 'react-icons/fa';
 
-/*
- * iOS/Safari blink fixes applied here:
- *  - No `hover:shadow-md` (removed; iOS fires a sticky :hover on tap that
- *    repaints the card → looks like a blink). Static `shadow` only.
- *  - No `transition` / `transition-shadow` on the card (Safari re-rasterizes
- *    animated shadow layers on tap). Kept only on the inner arrow, which is
- *    cheap and does not contain the card's box-shadow.
- *  - `[-webkit-tap-highlight-color:transparent]` to kill the gray flash.
- *  - `transform-gpu backface-hidden` to keep the card on its own layer.
- *  - No `overflow-x-hidden` on the page container (known iOS repaint trigger).
- *  - Welcome banner uses a solid color instead of a gradient so Safari
- *    doesn't repaint the banner subtree during a tap.
- */
-const cardBase =
-    'block bg-white rounded-xl shadow p-4 transform-gpu backface-hidden ' +
-    '[-webkit-tap-highlight-color:transparent] ' +
-    'border-2 border-transparent';
-
-const cardBaseLink = `${cardBase} active:border-blue-100`;
-
 const Home = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = user?.role;
 
+    // Check user roles
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
 
+    // Determine active subscription taking into account expiration date
     const isSubscribed = (() => {
         if (!user) return false;
         if (isAdmin) return true;
@@ -51,6 +33,7 @@ const Home = () => {
         return true;
     })();
 
+    // ── Determine access to Clinical / Pharmacy-specific tools ─────────────
     const isIndividualPharmacist =
         isIndividual && role === 'pharmacist';
 
@@ -84,10 +67,26 @@ const Home = () => {
         console.log('Close menu');
     };
 
+    // ── Shared class strings ────────────────────────────────────────────────
+    // Card: promoted to its own GPU layer so the iOS content-protection
+    // overlay does not re-rasterize it. Opacity-only hover (no shadow/
+    // transform animation = no repaint = no blink).
+    const cardClass =
+        'bg-white rounded-xl shadow-md p-4 transition-opacity duration-150 hover:opacity-90 ' +
+        '[transform:translateZ(0)] [backface-visibility:hidden] ' +
+        '[-webkit-backface-visibility:hidden]';
+
+    const cardClassDisabled =
+        cardClass + ' opacity-60 cursor-not-allowed';
+
+    // Arrow: composite-only transition (opacity), no transform.
+    const arrowClass =
+        'text-sm flex items-center gap-1 transition-opacity duration-150 group-hover:opacity-80';
+
     return (
-        <div className="page-container w-full max-w-full px-2 sm:px-4 md:px-6">
-            {/* Welcome Section — solid color (no gradient) to avoid iOS repaint */}
-            <div className="bg-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full mb-6">
+        <div className="page-container w-full max-w-full overflow-x-clip px-2 sm:px-4 md:px-6">
+            {/* Welcome Section */}
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full mb-6 [transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold">
@@ -118,7 +117,7 @@ const Home = () => {
             {/* Quick Access Grid - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 1. Medication Availability */}
-                <Link to="/medication-availability" className={cardBaseLink}>
+                <Link to="/medication-availability" className={cardClass}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
@@ -126,14 +125,14 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className="text-yellow-600 text-sm flex items-center gap-1">
+                        <span className={`${arrowClass} text-yellow-600`}>
                             Search <FaArrowRight className="text-xs" />
                         </span>
                     </div>
                 </Link>
 
-                {/* 2. Medication Information — the card that was blinking */}
-                <Link to="/knowledge/medications" className={cardBaseLink}>
+                {/* 2. Medication Information */}
+                <Link to="/knowledge/medications" className={cardClass}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
@@ -141,14 +140,14 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className="text-purple-600 text-sm flex items-center gap-1">
+                        <span className={`${arrowClass} text-purple-600`}>
                             Search <FaArrowRight className="text-xs" />
                         </span>
                     </div>
                 </Link>
 
                 {/* 3. Quick Check */}
-                <Link to="/quick-safety" className={cardBaseLink}>
+                <Link to="/quick-safety" className={cardClass}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">Quick Check</h2>
@@ -156,7 +155,7 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className="text-indigo-600 text-sm flex items-center gap-1">
+                        <span className={`${arrowClass} text-indigo-600`}>
                             Check <FaArrowRight className="text-xs" />
                         </span>
                     </div>
@@ -171,11 +170,11 @@ const Home = () => {
                         to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
                         onClick={onClose}
                         className={({ isActive }) =>
-                            `${cardBase} ${
+                            `${isSubscribed ? cardClass : cardClassDisabled} ${
                                 isActive && isSubscribed
-                                    ? 'border-blue-500'
-                                    : 'active:border-blue-100'
-                            } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
+                                    ? 'border-2 border-blue-500'
+                                    : 'border-2 border-transparent'
+                            }`
                         }
                     >
                         <div className="flex items-center gap-3 mb-2">
@@ -185,7 +184,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className="text-blue-600 text-sm flex items-center gap-1">
+                            <span className={`${arrowClass} text-blue-600`}>
                                 Open <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -194,7 +193,7 @@ const Home = () => {
 
                 {/* 5. Useful Links */}
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
-                    <Link to="/useful-links" className={cardBaseLink}>
+                    <Link to="/useful-links" className={cardClass}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
@@ -202,7 +201,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className="text-green-600 text-sm flex items-center gap-1">
+                            <span className={`${arrowClass} text-green-600`}>
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -212,7 +211,7 @@ const Home = () => {
                 {/* 6. Home Remedies */}
                 <Link
                     to="/knowledge/remedies"
-                    className={`${cardBaseLink} relative group cursor-pointer`}
+                    className={`${cardClass} relative group cursor-pointer`}
                 >
                     {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                     <div className="flex items-center gap-3 mb-2">
@@ -222,7 +221,7 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end mt-2">
-                        <span className="text-green-600 text-sm flex items-center gap-1 font-medium group-active:translate-x-1 transition-transform">
+                        <span className={`${arrowClass} text-green-600 font-medium`}>
                             {isAdmin ? "Browse" : "Coming Soon"} <FaArrowRight className="text-xs" />
                         </span>
                     </div>
@@ -233,7 +232,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* 7. Minor Illnesses */}
                 {showPharmacyTools && (
-                    <Link to="/knowledge/illnesses" className={cardBaseLink}>
+                    <Link to="/knowledge/illnesses" className={cardClass}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
@@ -241,7 +240,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className="text-orange-600 text-sm flex items-center gap-1">
+                            <span className={`${arrowClass} text-orange-600`}>
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -252,7 +251,7 @@ const Home = () => {
                 {showPharmacyTools && (
                     <Link
                         to="/knowledge/compounding"
-                        className={`${cardBaseLink} relative group cursor-pointer`}
+                        className={`${cardClass} relative group cursor-pointer`}
                     >
                         {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                         <div className="flex items-center gap-3 mb-2 mt-1">
@@ -262,7 +261,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end mt-2">
-                            <span className="text-orange-600 text-sm flex items-center gap-1 font-medium group-active:translate-x-1 transition-transform">
+                            <span className={`${arrowClass} text-orange-600 font-medium`}>
                                 {isAdmin ? "View" : "Coming Soon"} <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -271,7 +270,7 @@ const Home = () => {
 
                 {/* 9. Education */}
                 {showEducation && (
-                    <Link to="/knowledge/education" className={cardBaseLink}>
+                    <Link to="/knowledge/education" className={cardClass}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Education</h2>
@@ -279,7 +278,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className="text-purple-600 text-sm flex items-center gap-1">
+                            <span className={`${arrowClass} text-purple-600`}>
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
